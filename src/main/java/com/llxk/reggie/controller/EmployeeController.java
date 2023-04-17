@@ -1,6 +1,5 @@
 package com.llxk.reggie.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.llxk.reggie.common.R;
 import com.llxk.reggie.entity.Employee;
 import com.llxk.reggie.service.EmployeeService;
@@ -13,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
+import java.time.LocalDateTime;
 
 /**
  * ClassName: EmployeeController
@@ -33,50 +33,56 @@ public class EmployeeController {
     /**
      * 员工登陆
      * @param request request请求
-     * @param employee 页面post数据
+     * @param employee 页面post数据封装的employee对象
      * @return 通用结果R
      */
     @PostMapping("/login")
     public R<Employee> login(HttpServletRequest request, @RequestBody Employee employee){
-        //1.将页面提交的密码password进行md5加密处理
-        String password = employee.getPassword();
-        password = DigestUtils.md5DigestAsHex(password.getBytes());
-
-        //2.根据页面提交的用户名username查询数据库
-        LambdaQueryWrapper<Employee> queryWrapper = new LambdaQueryWrapper<>();
-        queryWrapper.eq(Employee::getUsername, employee.getUsername());
-        Employee emp = employeeService.getOne(queryWrapper);
-
-        //3.没有查询到则返回登陆失败
-        if (emp == null) {
-            return R.error("登陆失败(用户名不存在)");
+        //调用employeeService的login方法返回R对象
+        R<Employee> r = employeeService.login(employee);
+        //判断是否能登陆成功
+        if(r.getCode() == 1){
+            request.getSession().setAttribute("employee", r.getData().getId());
         }
-
-        //4.密码比对，如果不一致也返回登陆失败
-        if(!emp.getPassword().equals(password)){
-            return R.error("登陆失败(密码错误)");
-        }
-
-        //5.查看员工状态，如果为已禁用状态，则返回员工已禁用结果
-        if(emp.getStatus() == 0){
-            return R.error("账号已禁用");
-        }
-
-        //6.登陆成功，将员工id存入session并返回登陆成功结果
-        request.getSession().setAttribute("employee", emp.getId());
-        return R.success(emp);
-
+        return r;
     }
 
     /**
      * 员工退出
      * @param request request
-     * @return
+     * @return 退出成功信息
      */
     @RequestMapping("/logout")
     public R<String> logout(HttpServletRequest request){
         request.getSession().removeAttribute("employee");
-        return R.success("退出成功");
+        return employeeService.logout();
+
+    }
+
+
+    /**
+     * 新增员工
+     * @param request request
+     * @param employee 页面post数据封装的employee对象
+     * @return
+     */
+    @PostMapping
+    public R<String> save(HttpServletRequest request, @RequestBody Employee employee){
+        log.info("新增员工，员工信息：{}", employee.toString());
+        //设置初始密码123456，并进行，md5加密
+        employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
+
+        employee.setCreateTime(LocalDateTime.now());
+        employee.setUpdateTime(LocalDateTime.now());
+
+        //获取当前用户id
+        Long empId = (Long) request.getSession().getAttribute("employee");
+        employee.setCreateUser(empId);
+        employee.setUpdateUser(empId);
+
+        employeeService.save(employee);
+
+        return R.success("新增员工成功");
     }
 
 }
