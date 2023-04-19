@@ -12,7 +12,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.time.LocalDateTime;
 
 /**
  * ClassName: EmployeeController
@@ -72,13 +71,13 @@ public class EmployeeController {
         //设置初始密码123456，并进行，md5加密
         employee.setPassword(DigestUtils.md5DigestAsHex("123456".getBytes()));
 
-        employee.setCreateTime(LocalDateTime.now());
+        /*employee.setCreateTime(LocalDateTime.now());
         employee.setUpdateTime(LocalDateTime.now());
 
         //获取当前用户id
         Long empId = (Long) request.getSession().getAttribute("employee");
         employee.setCreateUser(empId);
-        employee.setUpdateUser(empId);
+        employee.setUpdateUser(empId);*/
 
         employeeService.save(employee);
 
@@ -94,7 +93,7 @@ public class EmployeeController {
      */
     @GetMapping("/page")
     public R<Page> page(int page, int pageSize, String name){
-        log.info("page={},pageSize={},name={}", page, pageSize, name);
+        //log.info("page={},pageSize={},name={}", page, pageSize, name);
 
         //构造分页构造器
         Page pageInfo = new Page(page, pageSize);
@@ -120,10 +119,10 @@ public class EmployeeController {
      */
     @PutMapping
     public R<String> update(HttpServletRequest request, @RequestBody Employee employee){
-        Long empId = (Long) request.getSession().getAttribute("employee");
 
+        /*Long empId = (Long) request.getSession().getAttribute("employee");
         employee.setUpdateUser(empId);
-        employee.setUpdateTime(LocalDateTime.now());
+        employee.setUpdateTime(LocalDateTime.now());*/
         employeeService.updateById(employee);
 
         return R.success("员工信息修改成功");

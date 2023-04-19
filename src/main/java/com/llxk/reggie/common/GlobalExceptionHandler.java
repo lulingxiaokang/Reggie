@@ -23,13 +23,21 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(SQLIntegrityConstraintViolationException.class)
     public R<String> exceptionHandler(SQLIntegrityConstraintViolationException ex){
+        log.info(ex.getMessage());
         if(ex.getMessage().contains("Duplicate entry")){
-            return R.error("用户名已存在");
+            return R.error("名字已存在");
         }
 
 
 
-        return R.error("位置错误");
+        return R.error("未知错误");
+    }
+
+    @ExceptionHandler(CustomException.class)
+    public R<String> exceptionHandler(CustomException ex){
+        log.info(ex.getMessage());
+
+        return R.error(ex.getMessage());
     }
 
 }
