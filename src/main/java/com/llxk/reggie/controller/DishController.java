@@ -125,19 +125,20 @@ public class DishController {
     }
 
     /**
-     * 修改菜品状态：起售/停售
+     * (批量)修改菜品状态：起售/停售
      * @param status
      * @param ids
      * @return
      */
     @PostMapping("/status/{status}")
-    public R<String> updateStatus(@PathVariable int status, Long[] ids){
-        for (Long id : ids) {
-            Dish dish = new Dish();
-            dish.setId(id);
-            dish.setStatus(status);
-            dishService.updateById(dish);
-        }
+    public R<String> updateStatus(@PathVariable int status, @RequestParam List<Long> ids){
+        dishService.updateStatus(status, ids);
+//        for (Long id : ids) {
+//            Dish dish = new Dish();
+//            dish.setId(id);
+//            dish.setStatus(status);
+//            dishService.updateById(dish);
+//        }
         return R.success("修改成功");
     }
 
@@ -147,13 +148,13 @@ public class DishController {
      * @return
      */
     @DeleteMapping
-    public R<String> delete(Long[] ids){
-        for (Long id : ids) {
+    public R<String> delete(@RequestParam List<Long> ids){
+        /*for (Long id : ids) {
             Dish dish = new Dish();
             dish.setId(id);
             dishService.remove(id);
-        }
-
+        }*/
+        dishService.removeWithFlavor(ids);
         return R.success("删除成功");
     }
 

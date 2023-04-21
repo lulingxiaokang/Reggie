@@ -101,7 +101,8 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
 
     @Override
     @Transactional
-    public void remove(Long id) {
+    public void removeWithFlavor(List<Long> ids) {
+        /*
         //条件构造器
         LambdaQueryWrapper<SetmealDish> setmealDishLambdaQueryWrapper = new LambdaQueryWrapper<>();
 
@@ -113,15 +114,53 @@ public class DishServiceImpl extends ServiceImpl<DishMapper, Dish> implements Di
         if(count > 0){
             //已被套餐关联，抛出一个业务异常
             throw new CustomException("当前菜品已被其他套餐关联，不能删除");
+        }*/
+
+
+        //查询菜品状态，确定是否可以删除（禁售菜品需不关联套餐，因此状态为禁用才可删除菜品）
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.in(Dish::getId, ids)
+                .eq(Dish::getStatus, 1);
+        int count = this.count(queryWrapper);
+
+        //如果不能删除，抛出一个业务异常
+        if(count > 0){
+            throw new CustomException("菜品正在售卖中，不能删除");
         }
 
         //删除菜品信息
-        this.removeById(id);
+        this.removeByIds(ids);
+
         //条件构造器
-        LambdaQueryWrapper<DishFlavor> queryWrapper = new LambdaQueryWrapper<>();
+        LambdaQueryWrapper<DishFlavor> flavorLambdaQueryWrapper = new LambdaQueryWrapper<>();
         //删除条件
-        queryWrapper.eq(DishFlavor::getDishId, id);
+        flavorLambdaQueryWrapper.in(DishFlavor::getDishId, ids);
         //删除口味信息
-        dishFlavorService.remove(queryWrapper);
+        dishFlavorService.remove(flavorLambdaQueryWrapper);
+
     }
+
+    @Override
+    @Transactional
+    public void updateStatus(int status, List<Long> ids) {
+        //禁售前需查看菜品是否关联了套餐
+        if(status == 0){
+            LambdaQueryWrapper<SetmealDish> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.in(SetmealDish::getDishId, ids);
+            int count = setmealDishService.count(queryWrapper);
+            //如果有菜品被套餐关联，则不能禁售，抛出业务异常
+            if(count > 0){
+                throw new CustomException("菜品已被其他套餐关联，不能禁售");
+            }
+        }
+        //没有被套餐关联或启售可执行
+        for (Long id : ids) {
+            Dish dish = new Dish();
+            dish.setId(id);
+            dish.setStatus(status);
+            this.updateById(dish);
+        }
+    }
+
+
 }
