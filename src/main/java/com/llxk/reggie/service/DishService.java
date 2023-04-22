@@ -38,7 +38,7 @@ public interface DishService extends IService<Dish> {
 
     /**
      * 根据id删除菜品信息，并删除对应口味信息
-     * @param id
+     * @param ids
      */
     void removeWithFlavor(List<Long> ids);
 

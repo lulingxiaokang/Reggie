@@ -1,13 +1,16 @@
 package com.llxk.reggie.controller;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.llxk.reggie.common.R;
 import com.llxk.reggie.dto.SetmealDto;
+import com.llxk.reggie.entity.Setmeal;
 import com.llxk.reggie.service.SetmealService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -95,10 +98,48 @@ public class SetmealController {
         return R.success(setmealService.getSetmealDto(id));
     }
 
+    /**
+     * 修改套餐信息
+     * @param setmealDto
+     * @return
+     */
     @PutMapping
     public R<String> update(@RequestBody SetmealDto setmealDto){
         setmealService.updateWithDish(setmealDto);
         return R.success("修改套餐信息成功");
+    }
+
+
+    /**
+     * 展示某类型的所有套餐信息
+     * @param setmeal
+     * @return
+     */
+    /*@GetMapping("/list")
+    public R<List<Setmeal>> list(Setmeal setmeal){
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId());
+        queryWrapper.eq(setmeal.getStatus() != null, Setmeal::getStatus, setmeal.getStatus());
+        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
+
+        List<Setmeal> list = setmealService.list(queryWrapper);
+
+        return R.success(list);
+    }*/
+    @GetMapping("/list")
+    public R<List<SetmealDto>> list(Setmeal setmeal){
+        LambdaQueryWrapper<Setmeal> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.eq(setmeal.getCategoryId() != null, Setmeal::getCategoryId, setmeal.getCategoryId());
+        queryWrapper.eq(setmeal.getStatus() != null, Setmeal::getStatus, setmeal.getStatus());
+        queryWrapper.orderByDesc(Setmeal::getUpdateTime);
+
+        List<Setmeal> list = setmealService.list(queryWrapper);
+
+        List<SetmealDto> setmealDtos = new ArrayList<>();
+        for (Setmeal setmeal1 : list) {
+            setmealDtos.add(setmealService.getSetmealDto(setmeal1.getId()));
+        }
+        return R.success(setmealDtos);
     }
 
 }

@@ -1,6 +1,7 @@
 package com.llxk.reggie.entity;
 
 import lombok.Data;
+
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -38,6 +39,7 @@ public class ShoppingCart implements Serializable {
 
     //图片
     private String image;
+
 
     private LocalDateTime createTime;
 }

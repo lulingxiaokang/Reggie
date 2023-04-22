@@ -41,9 +41,13 @@ public class LoginCheckFilter implements Filter {
         String requestURI = request.getRequestURI();
         //定义不需要处理的路径
         String[] urls = new String[]{
-                "/employee/login", "/employee/logout",
-                "/backend/**", "/front/**",
-                "/common/**"
+                "/employee/login",
+                "/employee/logout",
+                "/backend/**",
+                "/front/**",
+                "/common/**",
+                "/user/sendMsg",//移动端发送短信
+                "/user/login"//移动端登录
         };
 
         //2.判断本次请求是否需要处理
@@ -56,16 +60,28 @@ public class LoginCheckFilter implements Filter {
             return;
         }
 
-        //4.判断登录状态，如果已登录，则直接放行
+        //4-1.判断登录状态，如果已登录，则直接放行
         if (request.getSession().getAttribute("employee") != null) {
 
             Long empId = (Long) request.getSession().getAttribute("employee");
             BaseContext.setCurrentId(empId);
 
-            //log.info("用户已登录，用户ID为：{}", request.getSession().getAttribute("employee"));
+            log.info("用户已登录，用户ID为：{}", request.getSession().getAttribute("employee"));
             filterChain.doFilter(request, response);
             return;
         }
+
+        //4-2.判断登录状态，如果已登录，则直接放行
+        if (request.getSession().getAttribute("user") != null) {
+
+            Long userId = (Long) request.getSession().getAttribute("user");
+            BaseContext.setCurrentId(userId);
+
+            log.info("用户已登录，用户ID为：{}", userId);
+            filterChain.doFilter(request, response);
+            return;
+        }
+
 
         //5.如果未登录则返回未登录结果
         log.info("用户未登录");

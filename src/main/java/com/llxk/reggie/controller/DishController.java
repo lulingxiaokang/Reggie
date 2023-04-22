@@ -15,6 +15,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.web.bind.annotation.*;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -163,7 +164,7 @@ public class DishController {
      * @param dish
      * @return
      */
-    @GetMapping("/list")
+    /*@GetMapping("/list")
     public R<List<Dish>> list(Dish dish){
         //条件构造器
         LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
@@ -180,6 +181,29 @@ public class DishController {
         List<Dish> list = dishService.list(queryWrapper);
 
         return R.success(list);
+    }*/
+    @GetMapping("/list")
+    public R<List<DishDto>> list(Dish dish){
+        //条件构造器
+        LambdaQueryWrapper<Dish> queryWrapper = new LambdaQueryWrapper<>();
+
+        //查询条件
+        queryWrapper.eq(dish.getCategoryId() != null, Dish::getCategoryId, dish.getCategoryId());
+        queryWrapper.like(dish.getName() != null, Dish::getName, dish.getName());
+        //在售
+        queryWrapper.eq(Dish::getStatus, 1);
+
+        //排序条件
+        queryWrapper.orderByAsc(Dish::getSort).orderByDesc(Dish::getUpdateTime);
+
+        List<Dish> list = dishService.list(queryWrapper);
+
+        List<DishDto> dishDtoList = new ArrayList<>();
+
+        for (Dish d : list) {
+            dishDtoList.add(dishService.getByIdWithFlavor(d.getId()));
+        }
+        return R.success(dishDtoList);
     }
 
 }
