@@ -13,6 +13,12 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
+  #redis配置
+  redis:
+    host: 192.168.156.100
+    port: 6379
+    password: 202304
+    database: 0
 mybatis-plus:
   configuration:
     #在映射实体或者属性时，将数据库中表名和字段名中的下划线去掉，按照驼峰命名法映射
