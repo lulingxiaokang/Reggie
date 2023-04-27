@@ -7,6 +7,7 @@ import com.llxk.reggie.service.UserService;
 import com.llxk.reggie.utils.ValidateCodeUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpSession;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 /**
  * ClassName: UserController
@@ -32,6 +34,9 @@ public class UserController {
 
     @Resource
     private UserService userService;
+
+    @Resource
+    private RedisTemplate redisTemplate;
 
     /**
      * 发送手机短信验证码
@@ -52,8 +57,10 @@ public class UserController {
             //调用阿里云提供的短信服务API完成发送短信
             //SMSUtils.sendMessage("瑞吉外卖", "", phone, code);
 
-            //将生成的验证码保存到Session
-            session.setAttribute(phone, code);
+            /*//将生成的验证码保存到Session
+            session.setAttribute(phone, code);*/
+            //将验证码缓存到redis中，并设置有效期为1分钟
+            redisTemplate.opsForValue().set(phone, code, 5, TimeUnit.MINUTES);
 
             return R.success("手机短信验证码发送成功");
         }
@@ -76,13 +83,17 @@ public class UserController {
         //获取验证码
         String code = (String) map.get("code");
 
-        //从Session中获取保存的验证码
-        String codeInSession = (String) session.getAttribute(phone);
+        /*//从Session中获取保存的验证码
+        String codeInSession = (String) session.getAttribute(phone);*/
+
+        //从redis中获取缓存的验证码
+        String codeInSession = (String) redisTemplate.opsForValue().get(phone);
 
         //比对验证码
         if(codeInSession != null && codeInSession.equals(code)){
-            //比对成功，登陆成功
-
+            //比对成功，登录成功
+            //登录成功删除redis中缓存的验证码
+            redisTemplate.delete(phone);
             LambdaQueryWrapper<User> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(User::getPhone, phone);
             User user = userService.getOne(queryWrapper);
@@ -94,6 +105,8 @@ public class UserController {
                 userService.save(user);
             }
             session.setAttribute("user", user.getId());
+
+
             return R.success(user);
         }
 
